@@ -1,7 +1,7 @@
 package uk.co.solutions4j.network.device.health.endpoint;
 
-import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class EndpointController {

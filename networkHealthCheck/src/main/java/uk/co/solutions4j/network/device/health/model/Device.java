@@ -1,11 +1,9 @@
 package uk.co.solutions4j.network.device.health.model;
 
+import java.net.URI;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.stereotype.Component;
-
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
 
 @Component
 @ConfigurationProperties(prefix = "device")

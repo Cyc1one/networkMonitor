@@ -1,14 +1,15 @@
 package uk.co.solutions4j.network.device.health.comms;
 
-import uk.co.solutions4j.network.device.health.model.Device;
+import javax.annotation.PostConstruct;
+
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.social.DuplicateStatusException;
 import org.springframework.social.facebook.api.Facebook;
-import org.springframework.social.facebook.api.impl.FacebookTemplate;
 import org.springframework.social.twitter.api.Twitter;
 import org.springframework.social.twitter.api.impl.TwitterTemplate;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
+import uk.co.solutions4j.network.device.health.model.Device;
 
 @Component
 public class Messenger {
@@ -48,7 +49,11 @@ public class Messenger {
 
     public void sendTweet(Device device, String message){
         //twitter.directMessageOperations().sendDirectMessage(myScreenName, "Device " + device.getName() + message);
-        twitter.timelineOperations().updateStatus("@"+myScreenName+" Device "+device.getName()+ message+ " #networkMonitor #deviceDown");
+        try{
+        	twitter.timelineOperations().updateStatus("@"+myScreenName+" Device "+device.getName()+ message+ " #networkMonitor #deviceDown");
+        } catch (DuplicateStatusException e){
+        	twitter.directMessageOperations().sendDirectMessage(myScreenName, "Device " + device.getName() + message);
+        }
     }
 
     public void sendFacebookStatus(Device device, String message){
