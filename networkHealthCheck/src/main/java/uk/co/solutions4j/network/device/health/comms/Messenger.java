@@ -11,6 +11,9 @@ import org.springframework.stereotype.Component;
 
 import uk.co.solutions4j.network.device.health.model.Device;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 @Component
 public class Messenger {
 
@@ -47,13 +50,34 @@ public class Messenger {
         sendTweet(device, message);
     }
 
+    public void sendMessages(List<Device> devices){
+        sendTweet(devices.stream()
+                .map(Device::getFailureMessage)
+                .collect(Collectors.joining("\n")) + " #networkMonitor #deviceDown");
+    }
+
+    public void sendTweet(String message){
+        try{
+            twitter.timelineOperations().updateStatus("@" + myScreenName + message);
+        } catch (DuplicateStatusException e){
+            twitter.directMessageOperations().sendDirectMessage(myScreenName, message);
+        }
+    }
+
+
     public void sendTweet(Device device, String message){
         //twitter.directMessageOperations().sendDirectMessage(myScreenName, "Device " + device.getName() + message);
+        String completeMessage = "@" + myScreenName + " Device "+getDeviceDownString(device, message)+ " #networkMonitor #deviceDown";
         try{
-        	twitter.timelineOperations().updateStatus("@"+myScreenName+" Device "+device.getName()+ message+ " #networkMonitor #deviceDown");
+        	System.out.print("Sending tweet\n"+completeMessage);
+            twitter.timelineOperations().updateStatus(completeMessage);
         } catch (DuplicateStatusException e){
         	twitter.directMessageOperations().sendDirectMessage(myScreenName, "Device " + device.getName() + message);
         }
+    }
+
+    private String getDeviceDownString(Device device, String message) {
+        return " " + device.getName() + message ;
     }
 
     public void sendFacebookStatus(Device device, String message){

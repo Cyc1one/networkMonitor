@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.actuate.health.Health;
@@ -27,43 +29,57 @@ public class NetworkDeviceHealthChecker implements HealthIndicator {
     private static SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
 
     private List<Device> devices = new ArrayList<>();
-    private Set<Device> offlineSet = new HashSet<>();
+    private Set<Device> previouslyDetectedOffline = new HashSet<>();
 
     @Autowired
     private Messenger messenger;
 
-    public NetworkDeviceHealthChecker(){
-
-    }
-
-
     @Override
     public Health health() {
-        boolean healthy = true;
-        //TODO refactor this to collect up failures and just send the 1 message
-        for(Device device:devices) {
-            if(device!=null && device.getURI()!=null) {
-                if (!ping(device)) {
-                    healthy = false;
-                    System.out.println("got a ping failure on device " + device.getName());
-                    sendFailureMessages(device, " Ping failed");
-                } else if (!get(device)) {
-                    healthy = false;
-                    System.out.println("got a get failure on device " + device.getName());
-                    sendFailureMessages(device, " HTTP Get failed");
-                } else {
-                    offlineSet.remove(device);
-                }
-            }
-        }
+        boolean healthy = checkDevices();
+        messageOfflineGroup(devices);
         return healthy? Health.up().build() : Health.down().withDetail("Error Code", 1).build();
     }
 
-    private void sendFailureMessages(Device device, String message) {
-        if(!offlineSet.contains(device)) {
-        	offlineSet.add(device);
-        	messenger.sendMessage(device, message);
+    private boolean checkDevices() {
+        boolean healthy = true;
+        for(Device device:devices) {
+            device.setOffline(false);
+            if(device!=null && device.getURI()!=null) {
+                if (!ping(device)) {
+                    healthy = false;
+                    //System.out.println("got a ping failure on device " + device.getName());
+                    device.setFailureMessage(" Ping");
+                    device.setOffline(true);
+                } else if (!get(device)) {
+                    healthy = false;
+                    //System.out.println("got a get failure on device " + device.getName());
+                    device.setFailureMessage(" GET");
+                    device.setOffline(true);
+                } else {
+                    previouslyDetectedOffline.remove(device);
+                }
+            }
         }
+        return healthy;
+    }
+
+    public Set<Device> getCurrentHealthList(){
+        checkDevices();
+        return new HashSet<>(devices);
+    }
+
+    private void messageOfflineGroup(List<Device> offlineGroup) {
+        List<Device> messageList = new ArrayList<>();
+        offlineGroup.stream().
+                filter(d -> d.isOffline()).
+                filter(d -> !previouslyDetectedOffline.contains(d)).collect(Collectors.toList()).
+                forEach((device) -> {
+                    previouslyDetectedOffline.add(device);
+                    messageList.add(device);
+                });
+
+        messenger.sendMessages(messageList);
     }
 
     private boolean ping(Device device) {

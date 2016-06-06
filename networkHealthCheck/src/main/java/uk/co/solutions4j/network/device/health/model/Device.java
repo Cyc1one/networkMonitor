@@ -11,6 +11,8 @@ public class Device {
 
     private String name;
     private URI url;
+    private String failureMessage;
+    private boolean offline = false;
 
     public String getName() {
         return name;
@@ -31,4 +33,22 @@ public class Device {
     public void setUrl(String url) {
         this.url = URI.create(url);
     }
+
+    public void setFailureMessage(String failureMessage) {
+        this.failureMessage = failureMessage;
+    }
+
+    public String getFailureMessage() {
+        return failureMessage;
+    }
+
+    public boolean isOffline() {
+        return offline;
+    }
+
+    public void setOffline(boolean offline){
+        this.offline = offline;
+    }
+
+
 }
