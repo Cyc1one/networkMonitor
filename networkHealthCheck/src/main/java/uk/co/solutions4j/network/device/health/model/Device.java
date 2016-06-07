@@ -42,6 +42,13 @@ public class Device {
         return failureMessage;
     }
 
+    public String getFailedString(){
+        if(offline){
+            return name+": "+failureMessage;
+        }
+        return "";
+    }
+
     public boolean isOffline() {
         return offline;
     }

@@ -51,16 +51,18 @@ public class Messenger {
     }
 
     public void sendMessages(List<Device> devices){
-        sendTweet(devices.stream()
-                .map(Device::getFailureMessage)
-                .collect(Collectors.joining("\n")) + " #networkMonitor #deviceDown");
+        if(devices.size()>0) {
+            sendTweet(devices.stream()
+                    .map(Device::getFailedString)
+                    .collect(Collectors.joining("\n")) + " #networkMonitor #deviceDown");
+        }
     }
 
     public void sendTweet(String message){
         try{
             twitter.timelineOperations().updateStatus("@" + myScreenName + message);
         } catch (DuplicateStatusException e){
-            twitter.directMessageOperations().sendDirectMessage(myScreenName, message);
+            //twitter.directMessageOperations().sendDirectMessage(myScreenName, message);
         }
     }
 
